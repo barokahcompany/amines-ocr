@@ -72,7 +72,7 @@ def exec_scan(path):
     except Exception as e:
         response = {
                 "status": False,
-                "message": f"failed read ocr: {str(e)}",
+                "message": e,
             }
         print(json.dumps(response))
 
