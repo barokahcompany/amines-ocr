@@ -17,7 +17,7 @@ image_path = data.get("image", "-")
 
 ocr = PaddleOCR(
     use_textline_orientation=False,  # Disable angle detection (faster)
-    det_db_box_thresh=0.8,  # Adjust detection threshold
+    text_det_box_thresh=0.8,  # Adjust detection threshold
     rec_batch_num=4,  # Reduce batch size
     use_gpu=True,
     lang="en"
