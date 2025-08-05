@@ -24,49 +24,56 @@ ocr = PaddleOCR(
 
 def exec_scan(path):
     # Run OCR on image
-    ress = ocr.ocr(path)
-    ocr_time = time.time()
-    # full_text = " ".join([line[1][0] for line in ress[0]])
-    if ress and ress[0]:  # Ensure ress is not empty and ress[0] is not None
-        full_text = " ".join([line[1][0] for line in ress[0]])
+    try:
+        ress = ocr.ocr(path)
+        ocr_time = time.time()
+        # full_text = " ".join([line[1][0] for line in ress[0]])
+        if ress and ress[0]:  # Ensure ress is not empty and ress[0] is not None
+            full_text = " ".join([line[1][0] for line in ress[0]])
 
-        match = re.search(r"\b\d{16}\b", full_text)
-        end_time = time.time()
-        # Print the extracted NIK
-        if match:
-            nik = match.group(0)
-            response = {
-                "status": True,
-                "data": {
-                    "nik": nik,
-                    "input": path
-                },
-                "execution": f"Total Execution Time: {end_time - start_time:.2f} seconds"
-            }
-            print(json.dumps(response))
-            # print("NIK:", nik)
+            match = re.search(r"\b\d{16}\b", full_text)
+            end_time = time.time()
+            # Print the extracted NIK
+            if match:
+                nik = match.group(0)
+                response = {
+                    "status": True,
+                    "data": {
+                        "nik": nik,
+                        "input": path
+                    },
+                    "execution": f"Total Execution Time: {end_time - start_time:.2f} seconds"
+                }
+                print(json.dumps(response))
+                # print("NIK:", nik)
+            else:
+                response = {
+                    "status": False,
+                    "data": {
+                        "message": "NIK not found",
+                        "input": path
+                    },
+                    "execution": f"Total Execution Time: {end_time - start_time:.2f} seconds"
+                }
+                print(json.dumps(response))
+                # print("NIK not found")
         else:
+            end_time = time.time()
             response = {
                 "status": False,
                 "data": {
-                    "message": "NIK not found",
+                    "message": "failed scanning data",
                     "input": path
                 },
                 "execution": f"Total Execution Time: {end_time - start_time:.2f} seconds"
             }
             print(json.dumps(response))
-            # print("NIK not found")
-    else:
-        end_time = time.time()
+            full_text = ""  # Set a default value to avoid crashes
+    except Exception as e:
         response = {
-            "status": False,
-            "data": {
-                "message": "failed scanning data",
-                "input": path
-            },
-            "execution": f"Total Execution Time: {end_time - start_time:.2f} seconds"
-        }
+                "status": False,
+                "message": f"failed read ocr: {str(e)}",
+            }
         print(json.dumps(response))
-        full_text = ""  # Set a default value to avoid crashes
 
 exec_scan(image_path)
