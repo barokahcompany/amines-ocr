@@ -144,7 +144,7 @@ app.post("/scan-nik", upload.single("ktp"), async (req, res) => {
   } catch (error) {
     console.error("Failed get data:", error);
     res.status(500).json({
-      error: "Failed get data"
+      error: `Failed get data ${error}`
     })
   } finally {
     fs.unlink(tmpPath, () => {});
