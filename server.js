@@ -8,10 +8,6 @@ const {
 const path = require("path");
 const fs = require("fs");
 const mysql = require("mysql2/promise");
-const {
-  extractNIKFromImage
-} = require("./extract");
-
 const app = express();
 const upload = multer({
   limits: {
