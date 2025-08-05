@@ -133,22 +133,19 @@ app.post("/scan-nik", upload.single("ktp"), async (req, res) => {
     const ocrResult = await runOcr({
       image: tmpPath
     });
+    console.log(ocrResult);
+    
     if (!ocrResult.status || !ocrResult.data.nik) {
       return res.status(422).json({
         error: "OCR gagal atau NIK tidak ditemukan"
       });
-    } else {
-      res.status(500).json({
-        error: `Failed execute ocr ${ocrResult}`
-      })
-    }
+    } 
     const nik = ocrResult.data.nik;
 
     const [rows] = await pool.query(
       "SELECT * FROM dpt WHERE nik = ?",
       [nik]
     );
-    console.log(`SELECT * FROM dpt WHERE nik = ${nik}`);
 
     return res.json({
       success: true,
