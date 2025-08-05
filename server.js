@@ -80,9 +80,12 @@ app.post("/scan-nik", upload.single("ktp"), async (req, res) => {
       pythonProcess.stderr.on("data", (data) => {
         errorOutput += data.toString();
       });
-
+      
+      console.error("Python stderr:", errorOutput);
       // Handle process exit
       pythonProcess.on("close", (code) => {
+        console.log("code", code);
+        
         // if (code !== 0) {
         //   console.error("Python script exited with code:", code);
         //   console.error("Error Output:", errorOutput);
