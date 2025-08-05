@@ -20,7 +20,7 @@ ocr = PaddleOCR(
     det_db_box_thresh=0.8,  # Adjust detection threshold
     rec_batch_num=4,  # Reduce batch size
     use_gpu=True,
-    lang="latin"
+    lang="en"
     )
 
 def exec_scan(path):
