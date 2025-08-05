@@ -74,7 +74,10 @@ def exec_scan(path):
                 "status": False,
                 "message": str(e),
             }
+        print("=== ERROR JSON OUTPUT ===")
         print(json.dumps(response))
+        print("=== END ERROR JSON OUTPUT ===")
+        sys.stdout.flush()
         sys.exit(0)
 
 exec_scan(image_path)
