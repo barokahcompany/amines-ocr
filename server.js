@@ -98,11 +98,11 @@ app.post("/scan-nik", upload.single("ktp"), async (req, res) => {
           const jsonResponse = JSON.parse(cleanedOutput);
           if (jsonResponse.status === false) {
             console.error("Python reported error:", jsonResponse.message);
-            res.status(500).json({
-              error: "Python script execution failed",
-              message: jsonResponse.message,
-            });
-            reject(jsonResponse.message);
+            // res.status(500).json({
+            //   error: "Python script execution failed",
+            //   message: jsonResponse.message,
+            // });
+            reject(jsonResponse);
           } else {
             // Sukses
             resolve(jsonResponse);
