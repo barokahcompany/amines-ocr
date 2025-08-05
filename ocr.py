@@ -72,8 +72,9 @@ def exec_scan(path):
     except Exception as e:
         response = {
                 "status": False,
-                "message": e,
+                "message": str(e),
             }
         print(json.dumps(response))
+        sys.exit(0)
 
 exec_scan(image_path)
