@@ -92,8 +92,12 @@ app.post("/scan-nik", upload.single("ktp"), async (req, res) => {
         //   })
 
         // } else {
+        const cleanedOutput = output.trim();
+        if (!cleanedOutput) {
+          console.error("Python output kosong, tidak bisa parse JSON");
+          return reject(new Error("Empty output from Python script"));
+        }
         try {
-          const cleanedOutput = output.trim();
           console.log("Raw Python Output:", cleanedOutput);
           const jsonResponse = JSON.parse(cleanedOutput);
           if (jsonResponse.status === false) {
@@ -125,10 +129,10 @@ app.post("/scan-nik", upload.single("ktp"), async (req, res) => {
       return res.status(422).json({
         error: "OCR gagal atau NIK tidak ditemukan"
       });
-    }else{
+    } else {
       res.status(500).json({
-      error: `Failed execute ocr ${ocrResult}`
-    })
+        error: `Failed execute ocr ${ocrResult}`
+      })
     }
     const nik = ocrResult.data.nik;
 
