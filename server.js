@@ -1,5 +1,5 @@
 // server.js
-require('dotenv').config(); 
+require('dotenv').config();
 const express = require("express");
 const multer = require("multer");
 const {
@@ -83,26 +83,36 @@ app.post("/scan-nik", upload.single("ktp"), async (req, res) => {
 
       // Handle process exit
       pythonProcess.on("close", (code) => {
-        if (code !== 0) {
-          console.error("Python script exited with code:", code);
-          console.error("Error Output:", errorOutput);
-          res.status(500).json({
-            error: "Python script execution failedt",
-            message: errorOutput
-          })
+        // if (code !== 0) {
+        //   console.error("Python script exited with code:", code);
+        //   console.error("Error Output:", errorOutput);
+        //   res.status(500).json({
+        //     error: "Python script execution failed",
+        //     message: errorOutput
+        //   })
 
-        } else {
-          try {
-            const cleanedOutput = output.trim();
-            console.log("Raw Python Output:", cleanedOutput); 
-
-            const jsonResponse = JSON.parse(cleanedOutput);
+        // } else {
+        try {
+          const cleanedOutput = output.trim();
+          console.log("Raw Python Output:", cleanedOutput);
+          const jsonResponse = JSON.parse(cleanedOutput);
+          if (jsonResponse.status === false) {
+            console.error("Python reported error:", jsonResponse.message);
+            res.status(500).json({
+              error: "Python script execution failed",
+              message: jsonResponse.message,
+            });
+            reject(new Error(jsonResponse.message));
+          } else {
+            // Sukses
             resolve(jsonResponse);
-          } catch (error) {
-            console.error("JSON Parsing Error:", error);
-            reject(error)
-          } 
+          }
+
+        } catch (error) {
+          console.error("JSON Parsing Error:", error);
+          reject(error)
         }
+        // }
       });
     });
   }
@@ -123,7 +133,7 @@ app.post("/scan-nik", upload.single("ktp"), async (req, res) => {
       [nik]
     );
     console.log(`SELECT * FROM dpt WHERE nik = ${nik}`);
-    
+
     return res.json({
       success: true,
       nik,
@@ -136,7 +146,7 @@ app.post("/scan-nik", upload.single("ktp"), async (req, res) => {
     res.status(500).json({
       error: "Failed get data"
     })
-  }finally {
+  } finally {
     fs.unlink(tmpPath, () => {});
   }
 
@@ -144,6 +154,6 @@ app.post("/scan-nik", upload.single("ktp"), async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST_SERVICE;
-app.listen(PORT, HOST,() => {
+app.listen(PORT, HOST, () => {
   console.log(`API berjalan di port ${PORT}`);
 });
