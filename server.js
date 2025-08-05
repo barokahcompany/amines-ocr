@@ -102,7 +102,7 @@ app.post("/scan-nik", upload.single("ktp"), async (req, res) => {
               error: "Python script execution failed",
               message: jsonResponse.message,
             });
-            reject(new Error(jsonResponse.message));
+            reject(jsonResponse.message);
           } else {
             // Sukses
             resolve(jsonResponse);
@@ -125,6 +125,10 @@ app.post("/scan-nik", upload.single("ktp"), async (req, res) => {
       return res.status(422).json({
         error: "OCR gagal atau NIK tidak ditemukan"
       });
+    }else{
+      res.status(500).json({
+      error: `Failed execute ocr ${ocrResult}`
+    })
     }
     const nik = ocrResult.data.nik;
 
