@@ -92,6 +92,11 @@ app.post("/scan-nik", upload.single("ktp"), async (req, res) => {
         //   })
 
         // } else {
+        if (errorOutput) {
+          // kalau ada pesan error di stderr, bisa log atau kirim response error
+          console.error("Python stderr:", errorOutput);
+          return reject(new Error(`Empty output from Python script ${errorOutput}`));
+        }
         const cleanedOutput = output.trim();
         if (!cleanedOutput) {
           console.error("Python output kosong, tidak bisa parse JSON");
