@@ -9,7 +9,14 @@ const path = require("path");
 const fs = require("fs");
 const mysql = require("mysql2/promise");
 const app = express();
+const {
+  createWorker
+} = require('tesseract.js');
+// const { createWorker } = Tesseract;
+const sharp = require('sharp');
+
 const upload = multer({
+  dest: 'uploads/',
   limits: {
     fileSize: 5 * 1024 * 1024
   }
@@ -19,21 +26,8 @@ const dbConfig = {
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  // port: 3306,  // kalau port custom
 };
 const pool = mysql.createPool(dbConfig);
-// app.post("/scan-nik", upload.single("ktp"), async (req, res) => {
-//   try {
-//     if (!req.file) {
-//       return res.status(400).json({ error: 'Upload file gambar KTP di field "ktp"' });
-//     }
-//     const nik = await extractNIKFromImage(req.file.buffer);
-//     res.json({ nik });
-//   } catch (err) {
-//     res.status(422).json({ error: err.message });
-//   }
-
-// });
 
 app.post("/scan-nik", upload.single("ktp"), async (req, res) => {
   if (!req.file) {
@@ -80,12 +74,12 @@ app.post("/scan-nik", upload.single("ktp"), async (req, res) => {
       pythonProcess.stderr.on("data", (data) => {
         errorOutput += data.toString();
       });
-      
+
       console.error("Python stderr:", errorOutput);
       // Handle process exit
       pythonProcess.on("close", (code) => {
         console.log("code", code);
-        
+
         // if (code !== 0) {
         //   console.error("Python script exited with code:", code);
         //   console.error("Error Output:", errorOutput);
@@ -134,12 +128,12 @@ app.post("/scan-nik", upload.single("ktp"), async (req, res) => {
       image: tmpPath
     });
     console.log(ocrResult);
-    
+
     if (!ocrResult.status || !ocrResult.data.nik) {
       return res.status(422).json({
         error: "OCR gagal atau NIK tidak ditemukan"
       });
-    } 
+    }
     const nik = ocrResult.data.nik;
 
     const [rows] = await pool.query(
@@ -163,6 +157,102 @@ app.post("/scan-nik", upload.single("ktp"), async (req, res) => {
     fs.unlink(tmpPath, () => {});
   }
 
+});
+
+const runTesseract = async (inputPath) => {
+  // Preprocess gambar: grayscale + normalize
+  const ext = path.extname(inputPath);
+  const preprocessedPath = inputPath.replace(ext, `_preprocessed${ext}`);
+  await sharp(inputPath)
+    .grayscale()
+    .normalize()
+    .toFile(preprocessedPath);
+
+  const worker = await createWorker();
+
+  try {
+    await worker.load();
+
+    // const { data: { text } } = await worker.recognize(preprocessedPath);
+    const {
+      data: {
+        text
+      }
+    } = await worker.recognize(preprocessedPath, 'ind', {
+      tessedit_char_whitelist: '0123456789'
+    });
+    const cleanedText = text.replace(/b/g, '6').replace(/k/g, '6');
+
+
+    return {
+      cleanedText,
+      preprocessedPath
+    };
+  } finally {
+    await worker.terminate();
+  }
+};
+
+app.post('/upload-ktp', upload.single('ktp'), async (req, res) => {
+  if (!req.file) return res.status(400).json({
+    error: 'File tidak ditemukan'
+  });
+
+  const filePath = path.resolve(req.file.path);
+  const ext = path.extname(req.file.originalname);
+  const filePathWithExt = filePath + ext;
+
+  try {
+    // Rename file agar ada ekstensi sesuai original file
+    fs.renameSync(filePath, filePathWithExt);
+
+    const {
+      cleanedText,
+      preprocessedPath
+    } = await runTesseract(filePathWithExt);
+
+    const nikMatch = cleanedText.match(/\b\d{16}\b/);
+
+    if (nikMatch) {
+      const nik = nikMatch[0];
+
+      const [rows] = await pool.query(
+        "SELECT * FROM dpt WHERE nik = ?",
+        [nik]
+      );
+
+      res.json({
+        success: true,
+        nik,
+        profile: rows.length ?
+          rows[0] : null,
+        ocr: nikMatch
+      });
+
+    } else {
+      res.status(404).json({
+        error: 'NIK tidak ditemukan di hasil scan'
+      });
+    }
+    // Hapus file preprocessed dan file asli
+    fs.unlink(filePathWithExt, (err) => {
+      if (err) console.error('Gagal hapus file asli:', err);
+    });
+    fs.unlink(preprocessedPath, (err) => {
+      if (err) console.error('Gagal hapus file preprocessed:', err);
+    });
+
+  } catch (err) {
+    // Hapus file jika ada error
+    try {
+      if (fs.existsSync(filePathWithExt)) fs.unlinkSync(filePathWithExt);
+    } catch {}
+    console.error('Error proses OCR:', err);
+    res.status(500).json({
+      error: 'Gagal memproses OCR',
+      detail: err.message
+    });
+  }
 });
 
 const PORT = process.env.PORT || 3000;
