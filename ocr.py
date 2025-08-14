@@ -47,6 +47,7 @@ def exec_scan(path):
                 print(json.dumps(response))
                 # print("NIK:", nik)
                 sys.stdout.flush()
+                sys.exit(0)
             else:
                 response = {
                     "status": False,
@@ -58,6 +59,7 @@ def exec_scan(path):
                 }
                 print(json.dumps(response))
                 sys.stdout.flush()
+                sys.exit(0)
                 # print("NIK not found")
         else:
             end_time = time.time()
@@ -72,6 +74,7 @@ def exec_scan(path):
             print(json.dumps(response))
             full_text = ""  # Set a default value to avoid crashes
             sys.stdout.flush()
+            sys.exit(0)
     except Exception as e:
         response = {
                 "status": False,
@@ -81,7 +84,7 @@ def exec_scan(path):
         print(json.dumps(response))
         
         sys.stdout.flush()
-        sys.exit(0)
+        sys.exit(1)
 
 if __name__ == "__main__":
     try:
