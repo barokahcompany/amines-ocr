@@ -18,6 +18,8 @@ logging.getLogger("ppocr").setLevel(logging.ERROR)
 logging.getLogger("paddle").setLevel(logging.ERROR)
 
 ocr = PaddleOCR(
+    det_model_dir='models/ch_PP-OCRv3_det_infer',
+    rec_model_dir='models/ch_PP-OCRv3_rec_infer',
     use_angle_cls=False,
     use_space_char=True,
     show_log=False,
@@ -43,12 +45,71 @@ def resize_image_if_needed(image_path, max_width=1024):
     except Exception as e:
         return image_path  # fallback
 
+def exec_scan2(path, start_time):
+    try:
+        path = resize_image_if_needed(path)
+        ress = ocr.ocr(path)
+        end_time = time.time()
+
+        full_text = ""
+        if ress and isinstance(ress, list) and len(ress) > 0 and isinstance(ress[0], list):
+            for line in ress[0]:
+                try:
+                    if (
+                        isinstance(line, list)
+                        and len(line) > 1
+                        and isinstance(line[1], tuple)
+                        and len(line[1]) > 0
+                    ):
+                        full_text += line[1][0] + " "
+                except Exception:
+                    pass  # Abaikan error parsing OCR per line
+
+        if full_text:
+            match = re.search(r"\b\d{16}\b", full_text)
+            if match:
+                nik = match.group(0)
+                response = {
+                    "status": True,
+                    "data": {
+                        "nik": nik,
+                        "input": path
+                    },
+                    "execution": f"Total Execution Time: {end_time - start_time:.2f} seconds"
+                }
+                print(json.dumps(response))
+                sys.stdout.flush()
+                sys.exit(0)
+
+        # Jika tidak ada NIK atau teks kosong
+        response = {
+            "status": False,
+            "data": {
+                "message": "NIK not found" if full_text else "failed scanning data",
+                "input": path
+            },
+            "execution": f"Total Execution Time: {end_time - start_time:.2f} seconds"
+        }
+        print(json.dumps(response))
+        sys.stdout.flush()
+        sys.exit(0)
+
+    except Exception as e:
+        response = {
+            "status": False,
+            "message": str(e)
+        }
+        print(json.dumps(response))
+        sys.stdout.flush()
+        sys.exit(1)
+
 def exec_scan(path, start_time):
     # Run OCR on image
     try:
         path = resize_image_if_needed(path)
         ress = ocr.ocr(path)
         ocr_time = time.time()
+        
         # full_text = " ".join([line[1][0] for line in ress[0]])
         if ress and ress[0]:  # Ensure ress is not empty and ress[0] is not None
             full_text = " ".join([line[1][0] for line in ress[0]])
