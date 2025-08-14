@@ -4,16 +4,17 @@ from paddleocr import PaddleOCR
 import json
 import sys
 import time
+import traceback
 
-# Disable PaddleOCR logs
+# # Disable PaddleOCR logs
 logging.getLogger("ppocr").setLevel(logging.ERROR)
-start_time = time.time()
-# Read JSON from stdin
-input_data = sys.stdin.read().strip()
-data = json.loads(input_data)
-# Path to the image of KTP
-# image_path = "/Users/admin/Downloads/ktpAndre.jpeg"
-image_path = data.get("image", "-")
+# start_time = time.time()
+# # Read JSON from stdin
+# input_data = sys.stdin.read().strip()
+# data = json.loads(input_data)
+# # Path to the image of KTP
+# # image_path = "/Users/admin/Downloads/ktpAndre.jpeg"
+# image_path = data.get("image", "-")
 
 def exec_scan(path):
     # Run OCR on image
@@ -82,4 +83,20 @@ def exec_scan(path):
         sys.stdout.flush()
         sys.exit(0)
 
-exec_scan(image_path)
+if __name__ == "__main__":
+    try:
+        start_time = time.time()
+        input_data = sys.stdin.read().strip()
+        data = json.loads(input_data)
+        image_path = data.get("image", "-")
+        exec_scan(image_path)
+    except Exception as e:
+        response = {
+            "status": False,
+            "message": str(e),
+            "trace": traceback.format_exc()
+        }
+        print(json.dumps(response))
+        sys.stdout.flush()
+        sys.exit(1)
+# exec_scan(image_path)
