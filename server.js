@@ -66,7 +66,7 @@ app.post("/scan-nik", upload.single("ktp"), async (req, res) => {
 
   function runOcr(body) {
     return new Promise((resolve, reject) => {
-      const pythonProcess = spawn("python3", [scriptPath]);
+      const pythonProcess = spawn("python3.10", [scriptPath]);
 
       let output = "";
       let errorOutput = "";
@@ -87,15 +87,6 @@ app.post("/scan-nik", upload.single("ktp"), async (req, res) => {
       pythonProcess.on("close", (code) => {
         console.log("code", code);
 
-        // if (code !== 0) {
-        //   console.error("Python script exited with code:", code);
-        //   console.error("Error Output:", errorOutput);
-        //   res.status(500).json({
-        //     error: "Python script execution failed",
-        //     message: errorOutput
-        //   })
-
-        // } else {
         if (errorOutput) {
           // kalau ada pesan error di stderr, bisa log atau kirim response error
           console.error("Python stderr:", errorOutput);
