@@ -78,6 +78,8 @@ app.post("/scan-nik", upload.single("ktp"), async (req, res) => {
       });
       // Capture stderr (error messages)
       pythonProcess.stderr.on("data", (data) => {
+        console.log("[PYTHON STDOUT]", data.toString());
+
         errorOutput += data.toString();
       });
 
