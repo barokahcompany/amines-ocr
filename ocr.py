@@ -15,16 +15,25 @@ logging.getLogger("ppocr").setLevel(logging.ERROR)
 # # Path to the image of KTP
 # # image_path = "/Users/admin/Downloads/ktpAndre.jpeg"
 # image_path = data.get("image", "-")
+ocr = PaddleOCR(
+    use_angle_cls=False,
+    use_space_char=True,
+    show_log=False,
+    use_textline_orientation=False, 
+    text_det_box_thresh=0.8,
+    text_recognition_batch_size=4,
+    lang="en"
+)
 
 def exec_scan(path):
     # Run OCR on image
     try:
-        ocr = PaddleOCR(
-            use_textline_orientation=False,  # Disable angle detection (faster)
-            text_det_box_thresh=0.8,  # Adjust detection threshold
-            text_recognition_batch_size=4,  # Reduce batch size
-            lang="en"
-        )
+        # ocr = PaddleOCR(
+        #     use_textline_orientation=False,  # Disable angle detection (faster)
+        #     text_det_box_thresh=0.8,  # Adjust detection threshold
+        #     text_recognition_batch_size=4,  # Reduce batch size
+        #     lang="en"
+        # )
         ress = ocr.ocr(path)
         ocr_time = time.time()
         # full_text = " ".join([line[1][0] for line in ress[0]])
