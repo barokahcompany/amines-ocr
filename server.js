@@ -36,8 +36,14 @@ app.post("/scan-nik", upload.single("ktp"), async (req, res) => {
     });
   }
   // simpan buffer ke tmp file
-  const tmpPath = path.join(__dirname, req.file.originalname);
-  await import("fs").then(fs => fs.promises.writeFile(tmpPath, req.file.buffer));
+  const filePath = path.resolve(req.file.path);
+  const ext = path.extname(req.file.originalname);
+  const filePathWithExt = filePath + ext;
+  fs.renameSync(filePath, filePathWithExt);
+  // const tmpPath = path.join(__dirname+'/uploads/', req.file.originalname);
+  // console.log(tmpPath);
+  
+  // await import("fs").then(fs => fs.promises.writeFile(tmpPath, req.file.buffer));
 
   const scriptPath = path.join(__dirname, "ocr.py");
 
@@ -54,7 +60,7 @@ app.post("/scan-nik", upload.single("ktp"), async (req, res) => {
   console.log("Executing Python script:", scriptPath);
 
   const body = {
-    "image": tmpPath
+    "image": filePathWithExt
   };
   console.log(body);
 
@@ -75,7 +81,6 @@ app.post("/scan-nik", upload.single("ktp"), async (req, res) => {
         errorOutput += data.toString();
       });
 
-      console.error("Python stderr:", errorOutput);
       // Handle process exit
       pythonProcess.on("close", (code) => {
         console.log("code", code);
@@ -125,7 +130,7 @@ app.post("/scan-nik", upload.single("ktp"), async (req, res) => {
 
   try {
     const ocrResult = await runOcr({
-      image: tmpPath
+      image: filePathWithExt
     });
     console.log(ocrResult);
 
@@ -154,7 +159,7 @@ app.post("/scan-nik", upload.single("ktp"), async (req, res) => {
       error: `Failed get data ${error}`
     })
   } finally {
-    fs.unlink(tmpPath, () => {});
+    fs.unlink(filePathWithExt, () => {});
   }
 
 });
@@ -181,8 +186,10 @@ const runTesseract = async (inputPath) => {
     } = await worker.recognize(preprocessedPath, 'ind', {
       tessedit_char_whitelist: '0123456789'
     });
-    const cleanedText = text.replace(/b/g, '6').replace(/k/g, '6');
-
+    console.log(text);
+    
+    let cleanedText = text.replace(/b/g, '6').replace(/k/g, '6');
+    cleanedText = cleanedText.replace(/[a-zA-Z]/g, '');
 
     return {
       cleanedText,
