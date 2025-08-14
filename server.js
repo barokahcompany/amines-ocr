@@ -42,7 +42,7 @@ app.post("/scan-nik", upload.single("ktp"), async (req, res) => {
   fs.renameSync(filePath, filePathWithExt);
   // const tmpPath = path.join(__dirname+'/uploads/', req.file.originalname);
   // console.log(tmpPath);
-  
+
   // await import("fs").then(fs => fs.promises.writeFile(tmpPath, req.file.buffer));
 
   const scriptPath = path.join(__dirname, "ocr.py");
@@ -78,15 +78,19 @@ app.post("/scan-nik", upload.single("ktp"), async (req, res) => {
       });
       // Capture stderr (error messages)
       pythonProcess.stderr.on("data", (data) => {
-        console.log("[PYTHON STDOUT]", data.toString());
-
         errorOutput += data.toString();
       });
 
       // Handle process exit
       pythonProcess.on("close", (code) => {
-        console.log("code", code);
-
+        const lines = output.trim().split("\n");
+        const jsonLine = lines.find((line) => {
+          try {
+            return typeof JSON.parse(line) === "object";
+          } catch (_) {
+            return false;
+          }
+        });
         if (errorOutput) {
           // kalau ada pesan error di stderr, bisa log atau kirim response error
           console.error("Python stderr:", errorOutput);
@@ -99,13 +103,10 @@ app.post("/scan-nik", upload.single("ktp"), async (req, res) => {
         }
         try {
           console.log("Raw Python Output:", cleanedOutput);
-          const jsonResponse = JSON.parse(cleanedOutput);
+          const jsonResponse = JSON.parse(jsonLine);
           if (jsonResponse.status === false) {
             console.error("Python reported error:", jsonResponse.message);
-            // res.status(500).json({
-            //   error: "Python script execution failed",
-            //   message: jsonResponse.message,
-            // });
+
             reject(jsonResponse);
           } else {
             // Sukses
@@ -180,7 +181,7 @@ const runTesseract = async (inputPath) => {
       tessedit_char_whitelist: '0123456789'
     });
     console.log(text);
-    
+
     let cleanedText = text.replace(/b/g, '6').replace(/k/g, '6');
     cleanedText = cleanedText.replace(/[a-zA-Z]/g, '');
 

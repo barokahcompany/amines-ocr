@@ -5,16 +5,18 @@ import json
 import sys
 import time
 import traceback
+import cv2
+import os
 
 # # Disable PaddleOCR logs
+sys.stdout = open(sys.stdout.fileno(), mode='w', buffering=1, encoding='utf-8', errors='ignore')
+sys.stderr = sys.stdout  # optional, biar stderr & stdout sama
+os.environ["FLAGS_log_dir"] = "/dev/null"  # Matikan log file
+os.environ["GLOG_logtostderr"] = "1"
+os.environ["FLAGS_logging_level"] = "3"
 logging.getLogger("ppocr").setLevel(logging.ERROR)
-# start_time = time.time()
-# # Read JSON from stdin
-# input_data = sys.stdin.read().strip()
-# data = json.loads(input_data)
-# # Path to the image of KTP
-# # image_path = "/Users/admin/Downloads/ktpAndre.jpeg"
-# image_path = data.get("image", "-")
+logging.getLogger("paddle").setLevel(logging.ERROR)
+
 ocr = PaddleOCR(
     use_angle_cls=False,
     use_space_char=True,
@@ -25,15 +27,26 @@ ocr = PaddleOCR(
     lang="en"
 )
 
-def exec_scan(path):
+def resize_image_if_needed(image_path, max_width=1024):
+    try:
+        img = cv2.imread(image_path)
+        if img is None:
+            return image_path  # fallback
+        h, w = img.shape[:2]
+        if w > max_width:
+            ratio = max_width / w
+            resized_img = cv2.resize(img, (int(w * ratio), int(h * ratio)))
+            tmp_path = "/tmp/resized.jpg"
+            cv2.imwrite(tmp_path, resized_img)
+            return tmp_path
+        return image_path
+    except Exception as e:
+        return image_path  # fallback
+
+def exec_scan(path, start_time):
     # Run OCR on image
     try:
-        # ocr = PaddleOCR(
-        #     use_textline_orientation=False,  # Disable angle detection (faster)
-        #     text_det_box_thresh=0.8,  # Adjust detection threshold
-        #     text_recognition_batch_size=4,  # Reduce batch size
-        #     lang="en"
-        # )
+        path = resize_image_if_needed(path)
         ress = ocr.ocr(path)
         ocr_time = time.time()
         # full_text = " ".join([line[1][0] for line in ress[0]])
@@ -101,7 +114,7 @@ if __name__ == "__main__":
         input_data = sys.stdin.read().strip()
         data = json.loads(input_data)
         image_path = data.get("image", "-")
-        exec_scan(image_path)
+        exec_scan(image_path, start_time)
     except Exception as e:
         response = {
             "status": False,
