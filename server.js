@@ -66,7 +66,7 @@ app.post("/scan-nik", upload.single("ktp"), async (req, res) => {
 
   function runOcr(body) {
     return new Promise((resolve, reject) => {
-      const pythonProcess = spawn("python3.10", [scriptPath]);
+      const pythonProcess = spawn("python3", [scriptPath]);
 
       let output = "";
       let errorOutput = "";
