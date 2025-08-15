@@ -133,7 +133,7 @@ app.post("/scan-nik", upload.single("ktp"), async (req, res) => {
         error: "OCR gagal atau NIK tidak ditemukan"
       });
     }
-    // const nik = ocrResult.data.nik;
+    const nik = ocrResult.data.nik;
 
     // const [rows] = await pool.query(
     //   "SELECT * FROM dpt WHERE nik = ?",
