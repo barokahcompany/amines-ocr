@@ -7,6 +7,7 @@ import time
 import traceback
 import cv2
 import os
+from typing import Dict, Any, List
 
 # # Disable PaddleOCR logs
 sys.stdout = open(sys.stdout.fileno(), mode='w', buffering=1, encoding='utf-8', errors='ignore')
@@ -28,6 +29,15 @@ ocr = PaddleOCR(
     text_recognition_batch_size=4,
     lang="en"
 )
+DIGIT_MAP = str.maketrans({
+    'O':'0','o':'0','Q':'0','D':'0',
+    'I':'1','l':'1','|':'1',
+    'S':'5','s':'5',
+    'B':'8','b':'8',
+    'G':'6','g':'6'
+})
+def normalize_digits(s: str) -> str:
+    return re.sub(r'\D', '', (s or '').translate(DIGIT_MAP))
 
 def resize_image_if_needed(image_path, max_width=1024):
     try:
@@ -175,7 +185,7 @@ if __name__ == "__main__":
         input_data = sys.stdin.read().strip()
         data = json.loads(input_data)
         image_path = data.get("image", "-")
-        exec_scan(image_path, start_time)
+        exec_scan2(image_path, start_time)
     except Exception as e:
         response = {
             "status": False,
