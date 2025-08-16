@@ -411,16 +411,10 @@ app.post('/upload-ktp', upload.single('ktp'), async (req, res) => {
     // const { nik, conf, debug } = await runTesseract2(normalizedSrc);
     // console.log('nik', nik);
     
-    // if (!nik) {
-    //   // cleanup
-    //   try { fs.unlinkSync(inputPath); } catch {}
-    //   try { fs.unlinkSync(normalizedSrc); } catch {}
-    //   return res.status(404).json({ error: 'NIK tidak ditemukan di hasil scan', debug });
-    // }
     const normalizedSrc = tmpPath + '_src.jpg';
     await sharp(tmpPath).rotate().removeAlpha().jpeg({ quality: 92, mozjpeg: true }).toFile(normalizedSrc);
 
-    const { nik } = await runTesseract2(normalizedSrc);
+    const { nik } = await runTesseract(normalizedSrc);
 
     if (!nik) {
       try { fs.unlinkSync(normalizedSrc); } catch {}
@@ -466,9 +460,9 @@ app.post('/upload-ktp', upload.single('ktp'), async (req, res) => {
 
   } catch (err) {
     // Hapus file jika ada error
-    // try {
-    //   if (fs.existsSync(filePathWithExt)) fs.unlinkSync(filePathWithExt);
-    // } catch {}
+    try {
+      if (fs.existsSync(filePathWithExt)) fs.unlinkSync(filePathWithExt);
+    } catch {}
     console.error('Error proses OCR:', err);
     res.status(500).json({
       error: 'Gagal memproses OCR',
