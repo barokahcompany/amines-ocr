@@ -18,10 +18,10 @@ OCR = PaddleOCR(
     use_angle_cls=False,
     use_space_char=True,
     show_log=False,
-    lang="en",
-    # drop_score bisa diturunkan agar tidak membuang teks samar
-    drop_score=0.2,
-    # text_det_box_thresh (default 0.6); bisa disesuaikan
+    use_textline_orientation=False, 
+    text_det_box_thresh=0.8,
+    text_recognition_batch_size=4,
+    lang="en"
 )
 
 DIGIT_MAP = str.maketrans({

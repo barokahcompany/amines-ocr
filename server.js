@@ -16,6 +16,7 @@ const {
 const sharp = require('sharp');
 const { writePreprocessedPNG } = require('./preprocess');
 const { initWorkers } = require('./pyworker'); 
+const { writePreprocessedModify } = require('./preproccess-modify');
 
 const scriptPathPython = path.join(__dirname, 'ocr-worker.py');
   const { call } = initWorkers(scriptPathPython, 2);
@@ -140,17 +141,17 @@ app.post("/scan-nik", upload.single("ktp"), async (req, res) => {
     }
     const nik = ocrResult.data.nik;
 
-    // const [rows] = await pool.query(
-    //   "SELECT * FROM dpt WHERE nik = ?",
-    //   [nik]
-    // );
+    const [rows] = await pool.query(
+      "SELECT * FROM dpt WHERE nik = ?",
+      [nik]
+    );
     const end = process.hrtime(start);
     const elapsed = end[0] * 1000 + end[1] / 1e6; // ms
     return res.json({
       success: true,
       nik,
-      // profile: rows.length ?
-      //   rows[0] : null,
+      profile: rows.length ?
+        rows[0] : null,
       execution_time : `Execution time: ${elapsed.toFixed(3)} ms`,
       ocr: ocrResult
     });
@@ -172,7 +173,7 @@ app.post("/scan-ktp", upload.single("ktp"), async (req, res) => {
   const rawPath = path.resolve(req.file.path);
 
   // Preprocess ke PNG di RAM (atau /tmp)
-  const srcPng = await writePreprocessedPNG(rawPath);
+  const srcPng = await writePreprocessedModify(rawPath, { mode: 'paddle', width: 1400 });
 
   try {
     const ocrResult = await call({ image: srcPng }); // cepat: worker persisten
