@@ -1,11 +1,11 @@
 {
   "name": "ktp-extractor-api",
   "version": "1.0.0",
-  "main": "server.js",
-  "type": "commonjs",
+  "main": "src/app.js",
+  "type": "module",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "start": "node src/app.js",
+    "dev": "nodemon scr/app.js"
   },
   "keywords": [],
   "author": "",
@@ -16,6 +16,7 @@
     "express": "^5.1.0",
     "multer": "^2.0.2",
     "mysql2": "^3.14.3",
+    "openai": "^5.12.2",
     "sharp": "^0.34.3",
     "tesseract.js": "^6.0.1"
   },
