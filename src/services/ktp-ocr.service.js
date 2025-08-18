@@ -62,7 +62,7 @@ export async function ktpOcr(localPath) {
         role: 'user',
         content: [
           { type: 'input_text', text: 'Ekstrak NIK, NAMA, TEMPAT LAHIR, TANGGAL LAHIR dari KTP ini.' },
-          { type: 'input_image', image_url: dataUrl, detail: 'low' },
+          { type: 'input_image', image_url: dataUrl, detail: 'high' },
         ],
       },
     ],
