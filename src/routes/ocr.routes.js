@@ -59,9 +59,9 @@ router.post('/ktp', upload.single('ktp'), async (req, res, next) => {
     const result = await ktpOcr(req.file.path);
     // bersihkan file temp
     await fs.unlink(req.file.path).catch(() => {});
-    let tmpData = result.data;
-    if (tmpData.nik.length == 16) {
-      const nik = result.data.nik;
+    let tmpData = {};
+    const nik = result.data.nik;
+    if (nik.length == 16) {
       const [rows] = await pool.query(
         "SELECT * FROM dpt WHERE nik = ?",
         [nik]
@@ -69,13 +69,43 @@ router.post('/ktp', upload.single('ktp'), async (req, res, next) => {
       if (rows.length) {
         const dbData = rows[0];
         tmpData = {
-          ...tmpData,
-          alamat: hasValue(tmpData.alamat) ? tmpData.alamat : dbData.alamat,
-          tempat_lahir: hasValue(tmpData.tempat_lahir) ? tmpData.tempat_lahir : dbData.tempat_lahir,
-          tanggal_lahir: hasValue(tmpData.tanggal_lahir) ? tmpData.tanggal_lahir : normalizeDate(dbData.tempat_lahir),
-          jenis_kelamin: hasValue(tmpData.jenis_kelamin) ? tmpData.jenis_kelamin : (dbData.jenis_kelamin == "L" ? "LAKI-LAKI" : "PEREMPUAN"),
-          rt: hasValue(tmpData.rt) ? tmpData.rt : formatKtpRtRw(String(dbData.rt)),
-          rw: hasValue(tmpData.rw) ? tmpData.rw : formatKtpRtRw(String(dbData.rw)),
+          nik: dbData.nik,
+          nama: dbData.nama,
+          alamat: dbData.alamat,
+          tempat_lahir: dbData.tempat_lahir,
+          tanggal_lahir: normalizeDate(dbData.tanggal_lahir),
+          jenis_kelamin: (dbData.jenis_kelamin == "L" ? "LAKI-LAKI" : "PEREMPUAN"),
+          rt: formatKtpRtRw(String(dbData.rt)),
+          rw: formatKtpRtRw(String(dbData.rw)),
+          provinsi: "",
+          kabupaten_kota: "",
+          gol_darah: "",
+          kelurahan_desa: "",
+          kecamatan: "",
+          agama: "",
+          status_perkawinan: "",
+          pekerjaan: "",
+          confidance_note: result.data.confidence_note,
+        }
+      }else {
+        tmpData = {
+          nik: "",
+          nama: "",
+          alamat: "",
+          tempat_lahir: "",
+          tanggal_lahir: "",
+          jenis_kelamin: "",
+          rt: "",
+          rw: "",
+          provinsi: "",
+          kabupaten_kota: "",
+          gol_darah: "",
+          kelurahan_desa: "",
+          kecamatan: "",
+          agama: "",
+          status_perkawinan: "",
+          pekerjaan: "",
+          confidance_note: result.data.confidence_note,
         }
       }
     }
