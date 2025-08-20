@@ -66,6 +66,8 @@ router.post('/ktp', upload.single('ktp'), async (req, res, next) => {
         "SELECT * FROM dpt WHERE nik = ?",
         [nik]
       );
+      console.log(rows);
+      
       if (rows.length) {
         const dbData = rows[0];
         tmpData = {
@@ -80,8 +82,8 @@ router.post('/ktp', upload.single('ktp'), async (req, res, next) => {
           provinsi: "",
           kabupaten_kota: "",
           gol_darah: "",
-          kelurahan_desa: "",
-          kecamatan: "",
+          kelurahan_desa: dbData.kelurahan,
+          kecamatan: dbData.kecamatan,
           agama: "",
           status_perkawinan: "",
           pekerjaan: "",
